@@ -1,4 +1,4 @@
-from constants import DEFAULT_MODULO
+from .constants import DEFAULT_MODULO
 import math
 import random
 

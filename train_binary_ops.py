@@ -13,6 +13,8 @@ from torch.utils.data import DataLoader
 def parse_args():
     parser = argparse.ArgumentParser(description="Train binary operations with MLP and GrokAdamW")
     
+    parser.add_argument('--dataset', type=str, default="algorithmic",
+                        help='Dataset type: algorithmic, sparse_parity, or binary_algorithmic')
     parser.add_argument('--hidden_sizes', type=int, nargs='+', default=[200, 200],
                         help='List of hidden layer sizes')
     parser.add_argument('--num_epochs', type=int, default=1500,
@@ -41,6 +43,8 @@ def parse_args():
                         help='Lambda parameter for GrokAdamW')
     parser.add_argument('--log_frequency', type=int, default=50,
                         help='Logging frequency in epochs')
+    parser.add_argument('--train_precision', type=int, default=32,
+                        help='Floating point precision for the model and data: 16, 32, or 64. Default is 32.')
     
     return parser.parse_args()
 

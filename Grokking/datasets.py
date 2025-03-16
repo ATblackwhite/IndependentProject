@@ -2,7 +2,7 @@ import torch
 from torch.utils.data import Dataset
 import torchvision.datasets as datasets
 import random
-from constants import DEFAULT_MODULO
+from .constants import DEFAULT_MODULO
 import itertools
 
 def one_hot_encode(number, size):

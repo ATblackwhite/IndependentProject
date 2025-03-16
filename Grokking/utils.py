@@ -3,15 +3,15 @@ import torch
 import torch.optim as optim
 from torch.utils.data import DataLoader, Dataset, Subset
 from torch.utils.data.dataset import random_split
-from datasets import (AlgorithmicDataset, 
+from .datasets import (AlgorithmicDataset, 
                       SparseParityDataset, 
                       BinaryAlgorithmicDataset,
                       AlgorithmicDatasetTransformer)
-from models import MLP, Transformer
-from binary_operations import (product_mod,
+from .models import MLP, Transformer
+from .binary_operations import (product_mod,
                                add_mod,
                                subtract_mod)
-from constants import  FLOAT_PRECISION_MAP
+from .constants import  FLOAT_PRECISION_MAP
 
 
 
@@ -149,10 +149,10 @@ def get_dataset(args):
     elif args.dataset == "binary_alg":
         dataset = BinaryAlgorithmicDataset(BINARY_OPERATION_MAP[args.binary_operation], p=args.modulo, input_size=args.input_size, output_size=args.modulo)
     else: 
-        if args.use_transformer:
-            dataset = AlgorithmicDatasetTransformer(BINARY_OPERATION_MAP[args.binary_operation], p=args.modulo, input_size=args.input_size, output_size=args.modulo)
-        else:
-            dataset = AlgorithmicDataset(BINARY_OPERATION_MAP[args.binary_operation], p=args.modulo, input_size=args.input_size, output_size=args.modulo)
+        # if args.use_transformer:
+        #     dataset = AlgorithmicDatasetTransformer(BINARY_OPERATION_MAP[args.binary_operation], p=args.modulo, input_size=args.input_size, output_size=args.modulo)
+        # else:
+        dataset = AlgorithmicDataset(BINARY_OPERATION_MAP[args.binary_operation], p=args.modulo, input_size=args.input_size, output_size=args.modulo)
     
     train_dataset, test_dataset = split_dataset(dataset, args.train_fraction, args.batch_size)
 
@@ -180,10 +180,10 @@ def get_model(args):
                     
     else:
         print("Using AlgorithmicDataset")
-        if args.use_transformer:
-            model = Transformer(d_model=128, num_heads=4, num_layers=1, vocab_size=113, seq_len=2)
-        else:
-            model = MLP(input_size=args.input_size*2, output_size=args.modulo, hidden_sizes=args.hidden_sizes
+        # if args.use_transformer:
+        #     model = Transformer(d_model=128, num_heads=4, num_layers=1, vocab_size=113, seq_len=2)
+        # else:
+        model = MLP(input_size=args.input_size*2, output_size=args.modulo, hidden_sizes=args.hidden_sizes
                     , bias=False).to(device).to(FLOAT_PRECISION_MAP[args.train_precision])
     return model
         
