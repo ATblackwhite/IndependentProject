@@ -46,6 +46,7 @@ class AlgorithmicDataset(Dataset):
         self.data = []
         self.targets = []
 
+        # Dataset is determined by input_size
         for x in range(0,self.input_size):
             for y in range(0,self.input_size):
 

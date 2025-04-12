@@ -10,7 +10,9 @@ from .datasets import (AlgorithmicDataset,
 from .models import MLP, Transformer
 from .binary_operations import (product_mod,
                                add_mod,
-                               subtract_mod)
+                               subtract_mod,
+                               divide_mod,
+                               add_square_mod)
 from .constants import  FLOAT_PRECISION_MAP
 
 
@@ -139,7 +141,9 @@ def reduce_train_dataset(original_train_dataset, reduced_fraction, batch_size):
 
 BINARY_OPERATION_MAP =  {"add_mod": add_mod,
                          "product_mod": product_mod,
-                         "subtract_mod": subtract_mod
+                         "subtract_mod": subtract_mod,
+                         "divide_mod": divide_mod,
+                         "add_square_mod": add_square_mod
                          }
 def get_dataset(args):
     if args.dataset == "sparse_parity":
@@ -231,7 +235,7 @@ def parse_args():
                         help='Regularization method. Options: None, l1, l2. Default is None.')
     
     parser.add_argument('--binary_operation', type=str, default="add_mod",
-                        help='Binary operation for algorithmic tasks. Options: add_mod, product_mod, subtract_mod')
+                        help='Binary operation for algorithmic tasks. Options: add_mod, product_mod, subtract_mod, divide_mod, add_square_mod')
 
     parser.add_argument('--lr', type=float, default=None,
                         help='Learning rate. Default is None.')

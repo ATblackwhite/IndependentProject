@@ -34,7 +34,7 @@ def parse_args():
     parser.add_argument('--lr', type=float, default=1e-3,
                         help='Learning rate')
     parser.add_argument('--binary_operation', type=str, default="add_mod",
-                        help='Binary operation: add_mod, product_mod, or subtract_mod')
+                        help='Binary operation: add_mod, product_mod, subtract_mod, divide_mod, or add_square_mod')
     parser.add_argument('--seed', type=int, default=42,
                         help='Random seed')
     parser.add_argument('--device', type=str, default="cuda" if torch.cuda.is_available() else "cpu",
@@ -61,6 +61,14 @@ def parse_args():
                         help='Weights & Biases project name')
     parser.add_argument('--run_name', type=str, default=None,
                         help='Weights & Biases run name')
+    parser.add_argument('--use_softmax', action='store_true',
+                        help='使用普通交叉熵损失函数而不是stablemax_cross_entropy')
+    parser.add_argument('--use_adamw', action='store_true',
+                        help='使用Adam优化器而不是GrokAdamW优化器')
+    parser.add_argument('--adam_epsilon', type=float, default=1e-25,
+                        help='Epsilon value for Adam and AdamW')
+    parser.add_argument('--beta2', type=float, default=0.99,
+                        help='Beta2 parameter for Adam and AdamW')
     
     return parser.parse_args()
 
@@ -125,9 +133,12 @@ def grokking_signal_fn(training_loss: float, validation_loss: float) -> float:
     return (validation_loss - training_loss) / training_loss
 
 # 增加另一种grokking信号函数，基于训练和测试准确率的差距
+# 训练准确率高但测试准确率低表示可能过拟合
+# 归一化到0-1范围
 def grokking_signal_accuracy_fn(training_accuracy: float, validation_accuracy: float) -> float:
-    # 训练准确率高但测试准确率低表示可能过拟合
-    return max(0.0, (training_accuracy - validation_accuracy) / 100.0)  # 归一化到0-1范围
+    # High training accuracy and low validation accuracy indicates overfitting
+    # Normalize the difference to a range of 0-1
+    return max(0.0, (training_accuracy - validation_accuracy) / 100.0) 
 
 # 修改grokking信号函数的定义，使用闭包（closure）
 def create_grokking_signal_fn():
@@ -177,7 +188,11 @@ def main():
                 "gradient_clipping": args.gradient_clipping,
                 "batch_size": args.batch_size,
                 "train_fraction": args.train_fraction,
-                "dataset": args.dataset
+                "dataset": args.dataset,
+                "use_softmax": args.use_softmax,
+                "use_adamw": args.use_adamw,
+                "adam_epsilon": args.adam_epsilon,
+                "beta2": args.beta2
             }
         )
         
@@ -201,22 +216,37 @@ def main():
     # Initialize model
     model = get_model(args).to(args.device)
     
+    # 设置损失函数
+    if args.use_softmax:
+        criterion = nn.CrossEntropyLoss()
+    else:
+        criterion = stablemax_cross_entropy
+    
     # 创建grokking信号函数
     loss_signal_fn = create_grokking_signal_fn()
     accuracy_signal_fn = create_grokking_accuracy_signal_fn()
 
-    # 初始化优化器，传递函数对象而不是直接传递函数
-    optimizer = GrokAdamW(
-        model.parameters(),
-        lr=args.lr,
-        weight_decay=args.weight_decay,
-        alpha_init=args.alpha_init,
-        lamb=args.lamb,
-        gamma=args.gamma,
-        grokking_signal_decay_rate=args.grokking_signal_decay_rate,
-        gradient_clipping=args.gradient_clipping,
-        grokking_signal_fns=[loss_signal_fn, accuracy_signal_fn]  # 传递函数对象
-    )
+    # 初始化优化器
+    if args.use_adamw:
+        optimizer = torch.optim.AdamW(
+            model.parameters(), 
+            lr=args.lr, 
+            weight_decay=args.weight_decay, 
+            eps=args.adam_epsilon, 
+            betas=(0.9, args.beta2)
+        )
+    else:
+        optimizer = GrokAdamW(
+            model.parameters(),
+            lr=args.lr,
+            weight_decay=args.weight_decay,
+            alpha_init=args.alpha_init,
+            lamb=args.lamb,
+            gamma=args.gamma,
+            grokking_signal_decay_rate=args.grokking_signal_decay_rate,
+            gradient_clipping=args.gradient_clipping,
+            grokking_signal_fns=[loss_signal_fn, accuracy_signal_fn]
+        )
     
     # Training loop
     best_test_acc = 0
@@ -231,7 +261,7 @@ def main():
             
             optimizer.zero_grad()
             output = model(data)
-            loss = stablemax_cross_entropy(output, target)
+            loss = criterion(output, target)
             loss.backward()
             optimizer.step()
             
@@ -240,10 +270,10 @@ def main():
         avg_loss = total_loss / len(train_loader)
         
         # 计算测试集上的损失和准确率
-        test_loss, test_accuracy = evaluate(model, test_loader, stablemax_cross_entropy)
+        test_loss, test_accuracy = evaluate(model, test_loader, criterion)
             
         # 计算训练集上的损失和准确率
-        train_loss, train_accuracy = evaluate(model, train_loader, stablemax_cross_entropy)
+        train_loss, train_accuracy = evaluate(model, train_loader, criterion)
         
         # 更新信号函数中的值，而不是调用不存在的方法
         loss_signal_fn.update(train_loss, test_loss)
