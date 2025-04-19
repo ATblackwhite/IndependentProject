@@ -34,7 +34,7 @@ def parse_args():
     parser.add_argument('--lr', type=float, default=1e-3,
                         help='Learning rate')
     parser.add_argument('--binary_operation', type=str, default="add_mod",
-                        help='Binary operation: add_mod, product_mod, subtract_mod, divide_mod, or add_square_mod')
+                        help='Binary operation: add_mod, product_mod, subtract_mod, divide_mod, or add_square_mod, cubic_mod')
     parser.add_argument('--seed', type=int, default=42,
                         help='Random seed')
     parser.add_argument('--device', type=str, default="cuda" if torch.cuda.is_available() else "cpu",
