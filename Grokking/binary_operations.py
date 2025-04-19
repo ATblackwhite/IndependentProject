@@ -1,4 +1,4 @@
-from .constants import DEFAULT_MODULO
+from constants import DEFAULT_MODULO
 import math
 import random
 
@@ -22,3 +22,6 @@ def factorial(x,y, p=DEFAULT_MODULO):
 
 def random_map(x,y,p=DEFAULT_MODULO):
     return random.randint(0,p)
+
+def cubic_mod(x, y, p):
+    return (x**3 + x * y**2 + y) % p
