@@ -12,7 +12,8 @@ from .binary_operations import (product_mod,
                                add_mod,
                                subtract_mod,
                                divide_mod,
-                               add_square_mod)
+                               add_square_mod,
+                               cubic_mod)
 from .constants import  FLOAT_PRECISION_MAP
 
 
@@ -143,7 +144,8 @@ BINARY_OPERATION_MAP =  {"add_mod": add_mod,
                          "product_mod": product_mod,
                          "subtract_mod": subtract_mod,
                          "divide_mod": divide_mod,
-                         "add_square_mod": add_square_mod
+                         "add_square_mod": add_square_mod,
+                         "cubic_mod": cubic_mod
                          }
 def get_dataset(args):
     if args.dataset == "sparse_parity":

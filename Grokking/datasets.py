@@ -52,7 +52,7 @@ class AlgorithmicDataset(Dataset):
 
                 if 'div' in operation.__name__ and y == 0:
                     continue
-                result = self.operation(x, y) % self.p 
+                result = self.operation(x, y, self.p) 
                 
                 x_one_hot = one_hot_encode(x, self.input_size)
                 y_one_hot = one_hot_encode(y, self.input_size)
